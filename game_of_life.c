@@ -5,8 +5,8 @@
 
 #define X_FIELD_SIZE 80
 #define Y_FIELD_SIZE 25
-#define SLEEP_TIME 2          // in ms
-#define DEFAULT_TURN_TIME 90  // in ms
+#define SLEEP_TIME 2           // in ms
+#define DEFAULT_TURN_TIME 120  // in ms
 
 int **create_matrix(int h, int w);
 void clear_matrix(int **matrix, int h);
@@ -141,31 +141,37 @@ void menu() {
     init_pair(1, COLOR_BLACK, COLOR_WHITE);  // active
     init_pair(2, COLOR_WHITE, COLOR_BLACK);  // inactive
 
-    int c = 0;
     int line = 0;
     int flag = 1;
-    while ((c != '\n' || line) && flag) {
-        c = 0;
+    while (flag) {
+        int c = 0;
         render_fieldw(field, Y_FIELD_SIZE, X_FIELD_SIZE);
         attron(COLOR_PAIR(line == 0 ? 1 : 2));
-        mvprintw(30, 20, "START");
+        mvprintw(Y_FIELD_SIZE + 3, 5, "START");
+
         attron(COLOR_PAIR(line == 1 ? 1 : 2));
-        mvprintw(31, 20, "UPLOAD");
+        mvprintw(Y_FIELD_SIZE + 4, 5, "UPLOAD");
+
         attron(COLOR_PAIR(line == 2 ? 1 : 2));
-        mvprintw(32, 20, "EDIT");
+        mvprintw(Y_FIELD_SIZE + 5, 5, "EDIT");
+
         attron(COLOR_PAIR(line == 3 ? 1 : 2));
-        mvprintw(33, 20, "EXIT");
+        mvprintw(Y_FIELD_SIZE + 6, 5, "CLEAR");
+
+        attron(COLOR_PAIR(line == 4 ? 1 : 2));
+        mvprintw(Y_FIELD_SIZE + 7, 5, "EXIT");
         c = getch();
         if (c == KEY_UP) {
-            line = (4 + line - 1) % 4;
+            line = (5 + line - 1) % 5;
         }
         if (c == KEY_DOWN) {
-            line = (4 + line + 1) % 4;
+            line = (5 + line + 1) % 5;
         }
 
         if (c == '\n') {
             switch (line) {
                 case 0:
+
                     game(field, Y_FIELD_SIZE, X_FIELD_SIZE);
                     break;
                 case 1:
@@ -176,8 +182,10 @@ void menu() {
                 case 2:
                     edit(field, Y_FIELD_SIZE, X_FIELD_SIZE);
                     break;
-
                 case 3:
+                    reset_matrix(field, Y_FIELD_SIZE, X_FIELD_SIZE);
+                    break;
+                case 4:
                     flag = 0;
                     break;
             }
@@ -193,7 +201,6 @@ int upload(int **matrix, int h, int w) {
     int flag = 1;
     clear();
     refresh();
-
     curs_set(1);
     move(10, 0);
     echo();
@@ -213,7 +220,6 @@ int upload(int **matrix, int h, int w) {
             getch();
         }
     }
-
     if (flag) {
         reset_matrix(matrix, h, w);
         for (int i = 0; i < h && flag && c != EOF; i++) {
@@ -241,7 +247,6 @@ int upload(int **matrix, int h, int w) {
     keypad(stdscr, 1);
     curs_set(0);
     refresh();
-
     return flag;
 }
 
@@ -258,14 +263,12 @@ void edit(int **matrix, int h, int w) {
     int cursor_y = 4;
     clear();
     refresh();
-    mvprintw(0, w + 5, "move cursor: arrow keys");
-    mvprintw(1, w + 5, "change cell: spacebar");
-    mvprintw(2, w + 5, "exit: q");
+
     while (1) {
-        mvprintw(0, w + 5, "move cursor: arrow keys");
-        mvprintw(1, w + 5, "change cell: spacebar");
-        mvprintw(2, w + 5, "exit: q");
         render_fieldw(matrix, h, w);
+        mvprintw(h + 3, 5, "move cursor: arrow keys");
+        mvprintw(h + 5, 5, "change cell: spacebar");
+        mvprintw(h + 7, 5, "exit: q");
         mvaddch(cursor_y + 1, cursor_x + 1, 'X');
 
         int key = getch();
@@ -304,6 +307,9 @@ void game(int **matrix, int h, int w) {
     render_fieldw(matrix, h, w);
     while (flag) {
         refresh();
+        mvprintw(h + 3, 5, "speed: %d", time_key);
+        mvprintw(h + 4, 5, "<-   ->");
+        mvprintw(h + 6, 5, "exit: q");
         if (time_key) {
             if (!change_field(matrix, h, w)) {
                 flag = 0;
@@ -330,10 +336,11 @@ void game(int **matrix, int h, int w) {
                 break;
         }
         if (time_key) {
-            change_time = DEFAULT_TURN_TIME / time_key / time_key / time_key;
+            change_time = DEFAULT_TURN_TIME / time_key / time_key;
         }
     }
     render_fieldw(matrix, h, w);
     timeout(-1);
-    getch();
+    clear();
+    refresh();
 }
