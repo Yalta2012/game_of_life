@@ -242,6 +242,7 @@ int upload(int **matrix, int h, int w) {
             }
         }
     }
+    if(string) free(string);
     noecho();
     start_color();
     keypad(stdscr, 1);
